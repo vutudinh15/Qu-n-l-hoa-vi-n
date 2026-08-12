@@ -492,6 +492,57 @@ window.moveToHarvest = async function(flowerName, memberName) {
     }
 };
 
+/* ==========================================================================
+   ✨ ĐỔI ẢNH BÔNG HOA KHI CLICK VÀO ẢNH (TƯƠNG TỰ ĐỔI AVATAR)
+   ========================================================================== */
+
+// Mở Modal đổi ảnh cho hoa
+window.openChangeFlowerImgModal = function(flowerId, flowerName) {
+    const modal = document.getElementById('changeFlowerImgModal');
+    const title = document.getElementById('changeFlowerTitle');
+    const idInput = document.getElementById('editingFlowerId');
+    const urlInput = document.getElementById('flowerUrlInput');
+    const fileInput = document.getElementById('flowerFileInput');
+
+    if (idInput) idInput.value = flowerId;
+    if (title) title.innerText = `🌸 Đổi ảnh cho hoa: ${flowerName}`;
+    if (urlInput) urlInput.value = '';
+    if (fileInput) fileInput.value = '';
+
+    modal?.classList.remove('hidden');
+};
+
+// Lưu ảnh hoa mới lên Firebase
+window.saveFlowerImage = async function() {
+    const flowerId = document.getElementById('editingFlowerId')?.value;
+    const urlInput = document.getElementById('flowerUrlInput')?.value.trim();
+    const fileInput = document.getElementById('flowerFileInput')?.files[0];
+
+    if (!flowerId) return;
+
+    const applyNewImage = async (newImgUrl) => {
+        try {
+            await updateDoc(doc(db, "LoaiHoa", flowerId), {
+                image: newImgUrl
+            });
+            closeModal('changeFlowerImgModal');
+            alert('✅ Cập nhật ảnh hoa thành công!');
+        } catch (e) {
+            alert('Lỗi khi cập nhật ảnh hoa: ' + e.message);
+        }
+    };
+
+    if (fileInput) {
+        const reader = new FileReader();
+        reader.onload = (e) => applyNewImage(e.target.result);
+        reader.readAsDataURL(fileInput);
+    } else if (urlInput) {
+        applyNewImage(urlInput);
+    } else {
+        alert('Vui lòng chọn tệp ảnh hoặc nhập đường dẫn (URL) ảnh mới!');
+    }
+};
+
 function renderFlowers() {
     const flowerContainer = document.getElementById('flowerContainer');
     if (!flowerContainer) return;
@@ -543,11 +594,15 @@ function renderFlowers() {
 
             html += `
                 <div class="${cardBg} border p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-sm hover:shadow-md transition">
-                    <label class="flex items-center gap-2.5 cursor-pointer flex-1 overflow-hidden">
-                        <input type="checkbox" value="${flower.name}" class="flower-checkbox w-4 h-4 accent-emerald-600 rounded">
-                        <img src="${imgUrl}" alt="${flower.name}" class="w-11 h-11 object-cover rounded-xl border border-white/80 shadow-xs flex-shrink-0">
+                    <div class="flex items-center gap-2.5 flex-1 overflow-hidden">
+                        <input type="checkbox" value="${flower.name}" class="flower-checkbox w-4 h-4 accent-emerald-600 rounded cursor-pointer">
+                        <!-- Click trực tiếp vào ảnh để mở popup đổi ảnh -->
+                        <img src="${imgUrl}" alt="${flower.name}" 
+                            onclick="openChangeFlowerImgModal('${flower.id}', '${flower.name}')"
+                            title="Click để đổi ảnh hoa"
+                            class="w-11 h-11 object-cover rounded-xl border border-white/80 shadow-xs flex-shrink-0 cursor-pointer hover:scale-105 hover:opacity-90 transition transform">
                         <span class="text-xs font-bold text-gray-800 truncate">${flower.name}</span>
-                    </label>
+                    </div>
                     ${deleteBtn}
                 </div>
             `;
