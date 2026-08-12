@@ -18,7 +18,7 @@
             <div class="flex items-center gap-3">
                 <div class="text-3xl">🌸</div>
                 <div>
-                    <h1 class="text-xl font-bold text-yellow-300">HOA VIÊN HỘI KIM QUẢ</h1>
+                    <h1 class="text-xl font-bold text-yellow-300">HỘI KIM QUẢ</h1>
                     <p class="text-xs text-emerald-200">Hệ thống tra cứu hoa và quản lý thành viên</p>
                 </div>
             </div>
@@ -255,6 +255,28 @@
 
     <!-- File JavaScript chính -->
     <script type="module" src="app.js"></script>
+
+
+    <div class="form-group" style="display: flex; gap: 8px; align-items: center;">
+  <!-- Ô nhập link hoặc paste ảnh Base64 -->
+  <input 
+    type="text" 
+    id="imageInput" 
+    placeholder="Nhấp vào đây rồi nhấn Ctrl+V để dán ảnh..." 
+    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;"
+  />
+  
+  <!-- Nút chọn ảnh từ máy/điện thoại (Nên có) -->
+  <label for="fileUpload" style="padding: 8px 12px; background: #e0e0e0; cursor: pointer; border-radius: 6px; font-size: 13px;">
+    📁 Chọn file
+  </label>
+  <input type="file" id="fileUpload" accept="image/*" style="display: none;" />
+</div>
+
+<!-- Khung xem trước ảnh vừa dán -->
+<div id="previewContainer" style="margin-top: 5px; display: none;">
+  <img id="imagePreview" src="" alt="Preview" style="max-height: 60px; border-radius: 6px; border: 1px solid #ddd;" />
+</div>
 
 </body>
 </html>

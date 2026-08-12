@@ -863,6 +863,53 @@ async function saveData(trangThai) {
     }
 }
 
+
+const imageInput = document.getElementById('imageInput');
+const fileUpload = document.getElementById('fileUpload');
+const imagePreview = document.getElementById('imagePreview');
+const previewContainer = document.getElementById('previewContainer');
+
+// Hàm hiển thị xem trước ảnh
+function setPreview(base64Image) {
+  imageInput.value = base64Image; // Lưu chuỗi Base64 vào ô input
+  imagePreview.src = base64Image;
+  previewContainer.style.display = 'block';
+}
+
+// 1. Xử lý khi nhấn Ctrl + V (Paste) vào ô nhập
+imageInput.addEventListener('paste', (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (let item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreview(event.target.result);
+      };
+      reader.readAsDataURL(blob);
+      e.preventDefault(); // Ngăn hành vi dán mặc định
+      break;
+    }
+  }
+});
+
+// 2. Xử lý khi chọn file từ máy tính / điện thoại
+fileUpload.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+
+
+
+
+
 // Bắt sự kiện khởi tạo
 document.addEventListener("DOMContentLoaded", () => {
     updateAuthUI();
