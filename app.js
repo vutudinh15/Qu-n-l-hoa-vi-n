@@ -1,5 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { 
+    getFirestore, collection, addDoc, getDocs, query, where, 
+    updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ⚠️ DÁN MÃ FIREBASECONFIG CỦA BẠN VÀO ĐÂY:
 const firebaseConfig = {
@@ -16,7 +19,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Dữ liệu danh sách (Sẽ tự động đồng bộ Realtime từ Firebase)
+// Dữ liệu danh sách (Tự động đồng bộ Realtime từ Firebase)
 let membersList = [];
 let flowersData = [];
 const defaultImg = "https://cdn-icons-png.flaticon.com/512/346/346195.png";
@@ -231,7 +234,6 @@ window.handleChangePassword = function() {
     alert('✅ Đổi mật khẩu thành công!');
 };
 
-
 /* ==========================================================================
    2. QUẢN LÝ THÀNH VIÊN & CÁC LOẠI HOA TRÊN FIREBASE
    ========================================================================== */
@@ -325,7 +327,7 @@ function renderMemberDropdowns() {
 }
 
 // 🔥 Thêm thành viên lên Firebase
-async function handleAddMember() {
+window.handleAddMember = async function() {
     const inputNewMember = document.getElementById('newMemberName');
     if (!inputNewMember) return;
 
@@ -352,7 +354,7 @@ async function handleAddMember() {
     } catch (e) {
         alert("Lỗi khi thêm thành viên: " + e.message);
     }
-}
+};
 
 // 🔥 Xóa thành viên khỏi Firebase
 window.deleteMember = async function(memberId, memberName) {
@@ -367,7 +369,7 @@ window.deleteMember = async function(memberId, memberName) {
 };
 
 // 🔥 Thêm Loại Hoa mới lên Firebase
-async function handleAddFlower() {
+window.handleAddFlower = async function() {
     const nameInput = document.getElementById('newFlowerName');
     const colorSelect = document.getElementById('newFlowerColor');
     const imgInput = document.getElementById('newFlowerImg');
@@ -400,7 +402,7 @@ async function handleAddFlower() {
     } catch (e) {
         alert("Lỗi khi thêm hoa: " + e.message);
     }
-}
+};
 
 // 🔥 Xóa Loại Hoa khỏi Firebase
 window.deleteFlower = async function(flowerId, flowerName) {
@@ -525,7 +527,7 @@ function renderFlowers() {
         }
 
         let html = `
-            <div class="${groupBg} p-4 rounded-2xl border shadow-sm">
+            <div class="${groupBg} p-4 rounded-2xl border shadow-sm mb-4">
                 <div class="flex justify-between items-center mb-3">
                     <span class="font-bold text-gray-900 text-sm">Hoa nền ${color.toLowerCase()}</span>
                     <span class="text-xs text-gray-700 font-semibold">${filtered.length} hoa</span>
@@ -555,7 +557,6 @@ function renderFlowers() {
         flowerContainer.innerHTML += html;
     });
 }
-
 
 /* ==========================================================================
    3. TRA CỨU & HIỂN THỊ CHI TIẾT HOA CỦA THÀNH VIÊN
@@ -753,6 +754,58 @@ window.showMemberFlowersByName = async function(memberName) {
         container.innerHTML = `<p class="text-xs text-red-500">Lỗi: ${e.message}</p>`;
     }
 };
+
+/* ==========================================================================
+   4. TÍNH NĂNG THÊM HOA VÀO NHẬT KÝ FIREBASE & KHỞI TẠO
+   ========================================================================== */
+
+window.saveSelectedFlowers = async function() {
+    const selectACC = document.getElementById('selectACC');
+    const selectStatus = document.getElementById('selectStatus');
+    const checkboxes = document.querySelectorAll('.flower-checkbox:checked');
+
+    if (!selectACC || !selectStatus) return;
+
+    const tenACC = selectACC.value;
+    const trangThai = selectStatus.value;
+    const danhSachHoa = Array.from(checkboxes).map(cb => cb.value);
+
+    if (!tenACC) {
+        alert("Vui lòng chọn tài khoản!");
+        return;
+    }
+
+    if (danhSachHoa.length === 0) {
+        alert("Vui lòng tích chọn ít nhất 1 loại hoa!");
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "NhatKyHoa"), {
+            tenACC: tenACC,
+            trangThai: trangThai,
+            danhSachHoa: danhSachHoa,
+            thoiGian: serverTimestamp()
+        });
+
+        alert(`🎉 Đã lưu ${danhSachHoa.length} hoa cho tài khoản [${tenACC}] thành công!`);
+        
+        // Uncheck các checkbox sau khi lưu thành công
+        checkboxes.forEach(cb => cb.checked = false);
+
+        // Nếu đang xem chi tiết của thành viên này thì load lại
+        const selectMemberToView = document.getElementById('selectMemberToView');
+        if (selectMemberToView && selectMemberToView.value === tenACC) {
+            selectMemberToView.dispatchEvent(new Event('change'));
+        }
+    } catch (e) {
+        alert("Lỗi khi lưu nhật ký hoa: " + e.message);
+    }
+};
+
+// Gắn sự kiện Lọc/Tìm kiếm hoa
+document.getElementById('selectColor')?.addEventListener('change', renderFlowers);
+document.getElementById('inputSearch')?.addEventListener('input', renderFlowers);
 
 
 /* ==========================================================================
