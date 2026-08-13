@@ -19,12 +19,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Dữ liệu danh sách (Tự động đồng bộ Realtime từ Firebase)
 let membersList = [];
 let flowersData = [];
 const defaultImg = "https://cdn-icons-png.flaticon.com/512/346/346195.png";
 
-// Danh sách hoa mặc định để khởi tạo lần đầu nếu Database trống
+// Biến lưu trữ tạm thời ảnh đang chọn/paste/tải lên trong modal đổi ảnh hoa
+let currentEditingFlowerImageBase64 = "";
+
 const defaultFlowersSeed = [
     { name: "Chép Vàng Vượt Sóng", color: "Đỏ", image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=100&auto=format&fit=crop&q=60" },
     { name: "Cỏ Rồng Ắt Linh", color: "Đỏ", image: "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=100&auto=format&fit=crop&q=60" },
@@ -238,7 +239,6 @@ window.handleChangePassword = function() {
    2. QUẢN LÝ THÀNH VIÊN & CÁC LOẠI HOA TRÊN FIREBASE
    ========================================================================== */
 
-// 🔥 1. Tải & Lắng nghe danh sách Thành Viên từ Firebase
 function initMembersFromFirebase() {
     const membersRef = collection(db, "ThanhVien");
 
@@ -264,7 +264,6 @@ function initMembersFromFirebase() {
     });
 }
 
-// 🔥 2. Tải & Lắng nghe danh sách Loại Hoa từ Firebase
 function initFlowersFromFirebase() {
     const flowersRef = collection(db, "LoaiHoa");
 
@@ -326,7 +325,6 @@ function renderMemberDropdowns() {
     });
 }
 
-// 🔥 Thêm thành viên lên Firebase
 window.handleAddMember = async function() {
     const inputNewMember = document.getElementById('newMemberName');
     if (!inputNewMember) return;
@@ -356,7 +354,6 @@ window.handleAddMember = async function() {
     }
 };
 
-// 🔥 Xóa thành viên khỏi Firebase
 window.deleteMember = async function(memberId, memberName) {
     if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${memberName}" vĩnh viễn khỏi Firebase không?`)) {
         try {
@@ -368,15 +365,13 @@ window.deleteMember = async function(memberId, memberName) {
     }
 };
 
-// 🔥 Thêm Loại Hoa mới lên Firebase
 window.handleAddFlower = async function() {
     const nameInput = document.getElementById('newFlowerName');
     const colorSelect = document.getElementById('newFlowerColor');
-    const imgInput = document.getElementById('newFlowerImg');
     
     const name = nameInput.value.trim();
     const color = colorSelect.value;
-    const img = imgInput.value.trim();
+    const img = currentEditingFlowerImageBase64 || defaultImg;
 
     if (!name) { 
         alert('Vui lòng nhập tên hoa!'); 
@@ -392,19 +387,23 @@ window.handleAddFlower = async function() {
         await addDoc(collection(db, "LoaiHoa"), {
             name: name,
             color: color,
-            image: img || defaultImg,
+            image: img,
             thoiGian: serverTimestamp()
         });
 
         alert(`🎉 Đã thêm hoa "${name}" thành công lên Firebase!`);
         nameInput.value = '';
-        imgInput.value = '';
+        currentEditingFlowerImageBase64 = "";
+        
+        // Reset preview ảnh về mặc định nếu có
+        const previewImg = document.getElementById('previewFlowerImg');
+        if(previewImg) previewImg.src = defaultImg;
+
     } catch (e) {
         alert("Lỗi khi thêm hoa: " + e.message);
     }
 };
 
-// 🔥 Xóa Loại Hoa khỏi Firebase
 window.deleteFlower = async function(flowerId, flowerName) {
     if(confirm(`Bạn có chắc muốn xóa loại hoa "${flowerName}" khỏi danh sách mẫu trên Firebase không?`)) {
         try {
@@ -452,7 +451,6 @@ window.deleteUserFlower = async function(flowerName, memberName) {
     }
 };
 
-// Chuyển hoa từ "Chờ bồi dưỡng" sang "Đã thu hoạch"
 window.moveToHarvest = async function(flowerName, memberName) {
     if (!confirm(`Bạn có chắc muốn chuyển hoa "${flowerName}" của [${memberName}] sang danh sách ĐÃ THU HOẠCH?`)) {
         return;
@@ -493,10 +491,9 @@ window.moveToHarvest = async function(flowerName, memberName) {
 };
 
 /* ==========================================================================
-   ✨ ĐỔI ẢNH BÔNG HOA KHI CLICK VÀO ẢNH (TƯƠNG TỰ ĐỔI AVATAR)
+   ✨ TÍNH NĂNG MỞ MODAL ĐỔI ẢNH & HỖ TRỢ PASTE ẢNH (CTRL + V)
    ========================================================================== */
 
-// Mở Modal đổi ảnh cho hoa
 window.openChangeFlowerImgModal = function(flowerId, flowerName) {
     const modal = document.getElementById('changeFlowerImgModal');
     const title = document.getElementById('changeFlowerTitle');
@@ -512,7 +509,6 @@ window.openChangeFlowerImgModal = function(flowerId, flowerName) {
     modal?.classList.remove('hidden');
 };
 
-// Lưu ảnh hoa mới lên Firebase
 window.saveFlowerImage = async function() {
     const flowerId = document.getElementById('editingFlowerId')?.value;
     const urlInput = document.getElementById('flowerUrlInput')?.value.trim();
@@ -539,9 +535,32 @@ window.saveFlowerImage = async function() {
     } else if (urlInput) {
         applyNewImage(urlInput);
     } else {
-        alert('Vui lòng chọn tệp ảnh hoặc nhập đường dẫn (URL) ảnh mới!');
+        alert('Vui lòng chọn tệp ảnh hoặc dán ảnh (Ctrl+V)!');
     }
 };
+
+// Lắng nghe sự kiện paste (Ctrl + V) trên toàn bộ tài liệu hoặc các vùng chọn ảnh
+document.addEventListener('paste', (event) => {
+    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.includes('image')) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Result = e.target.result;
+                currentEditingFlowerImageBase64 = base64Result;
+                
+                // Hiển thị preview nếu có ô xem trước
+                const previewImg = document.getElementById('previewFlowerImg');
+                if (previewImg) previewImg.src = base64Result;
+
+                alert("✅ Đã nhận ảnh chụp màn hình (Snipping Tool) thành công!");
+            };
+            reader.readAsDataURL(blob);
+        }
+    }
+});
 
 function renderFlowers() {
     const flowerContainer = document.getElementById('flowerContainer');
@@ -596,11 +615,10 @@ function renderFlowers() {
                 <div class="${cardBg} border p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-sm hover:shadow-md transition">
                     <div class="flex items-center gap-2.5 flex-1 overflow-hidden">
                         <input type="checkbox" value="${flower.name}" class="flower-checkbox w-4 h-4 accent-emerald-600 rounded cursor-pointer">
-                        <!-- Click trực tiếp vào ảnh để mở popup đổi ảnh -->
                         <img src="${imgUrl}" alt="${flower.name}" 
                             onclick="openChangeFlowerImgModal('${flower.id}', '${flower.name}')"
                             title="Click để đổi ảnh hoa"
-                            class="w-11 h-11 object-cover rounded-xl border border-white/80 shadow-xs flex-shrink-0 cursor-pointer hover:scale-105 hover:opacity-90 transition transform">
+                            class="w-11 h-11 object-cover rounded-xl border border-white/80 shadow-xs flex-shrink-0 cursor-pointer hover:scale-110 hover:opacity-90 transition transform">
                         <span class="text-xs font-bold text-gray-800 truncate">${flower.name}</span>
                     </div>
                     ${deleteBtn}
@@ -752,7 +770,6 @@ document.getElementById('selectMemberToView')?.addEventListener('change', async 
     }
 });
 
-// Xem hoa thành viên từ Popup Detail
 window.showMemberFlowersByName = async function(memberName) {
     const titleElem = document.getElementById('modalMemberName');
     const container = document.getElementById('modalFlowerList');
@@ -845,10 +862,8 @@ window.saveSelectedFlowers = async function() {
 
         alert(`🎉 Đã lưu ${danhSachHoa.length} hoa cho tài khoản [${tenACC}] thành công!`);
         
-        // Uncheck các checkbox sau khi lưu thành công
         checkboxes.forEach(cb => cb.checked = false);
 
-        // Nếu đang xem chi tiết của thành viên này thì load lại
         const selectMemberToView = document.getElementById('selectMemberToView');
         if (selectMemberToView && selectMemberToView.value === tenACC) {
             selectMemberToView.dispatchEvent(new Event('change'));
@@ -858,177 +873,11 @@ window.saveSelectedFlowers = async function() {
     }
 };
 
-// Gắn sự kiện Lọc/Tìm kiếm hoa
 document.getElementById('selectColor')?.addEventListener('change', renderFlowers);
 document.getElementById('inputSearch')?.addEventListener('input', renderFlowers);
 
-
-/* ==========================================================================
-   4. CHUYỂN TAB & LƯU DỮ LIỆU FIREBASE & KHỞI TẠO
-   ========================================================================== */
-
-window.switchTab = function(tabName) {
-    const viewNhapHoa = document.getElementById('viewNhapHoa');
-    const viewThanhVien = document.getElementById('viewThanhVien');
-    const btnNhap = document.getElementById('tabBtnNhapHoa');
-    const btnTV = document.getElementById('tabBtnThanhVien');
-
-    if(tabName === 'nhapHoa') {
-        viewNhapHoa?.classList.remove('hidden');
-        viewThanhVien?.classList.add('hidden');
-        if (btnNhap) btnNhap.className = "bg-yellow-400 text-gray-900 px-4 py-1.5 rounded-xl text-xs font-bold shadow transition";
-        if (btnTV) btnTV.className = "bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition";
-    } else {
-        viewNhapHoa?.classList.add('hidden');
-        viewThanhVien?.classList.remove('hidden');
-        if (btnTV) btnTV.className = "bg-yellow-400 text-gray-900 px-4 py-1.5 rounded-xl text-xs font-bold shadow transition";
-        if (btnNhap) btnNhap.className = "bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition";
-    }
-};
-
-async function saveData(trangThai) {
-    const acc = document.getElementById('selectACC').value;
-    const checkboxes = document.querySelectorAll('.flower-checkbox:checked');
-    
-    if (!acc) {
-        alert('Vui lòng chọn ACC / Thành viên!');
-        return;
-    }
-
-    if (checkboxes.length === 0) { 
-        alert('Vui lòng chọn ít nhất 1 bông hoa!'); 
-        return; 
-    }
-
-    const selectedFlowers = Array.from(checkboxes).map(cb => cb.value);
-
-    try {
-        const q = query(collection(db, "NhatKyHoa"), where("tenACC", "==", acc));
-        const querySnapshot = await getDocs(q);
-
-        let daThuHoachSet = new Set();
-        let choBoiDuongSet = new Set();
-
-        querySnapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            if (data.danhSachHoa && Array.isArray(data.danhSachHoa)) {
-                data.danhSachHoa.forEach(flower => {
-                    if (data.trangThai === 'Đã thu hoạch') {
-                        daThuHoachSet.add(flower);
-                    } else if (data.trangThai === 'Chờ bồi dưỡng') {
-                        choBoiDuongSet.add(flower);
-                    }
-                });
-            }
-        });
-
-        let hoaCanThem = [];
-        let hoaBoQua = [];
-
-        selectedFlowers.forEach(flower => {
-            if (trangThai === 'Đã thu hoạch') {
-                if (daThuHoachSet.has(flower)) {
-                    hoaBoQua.push(flower);
-                } else {
-                    hoaCanThem.push(flower);
-                }
-            } else if (trangThai === 'Chờ bồi dưỡng') {
-                if (daThuHoachSet.has(flower) || choBoiDuongSet.has(flower)) {
-                    hoaBoQua.push(flower);
-                } else {
-                    hoaCanThem.push(flower);
-                }
-            }
-        });
-
-        if (hoaCanThem.length > 0) {
-            await addDoc(collection(db, "NhatKyHoa"), {
-                tenACC: acc,
-                danhSachHoa: hoaCanThem,
-                trangThai: trangThai,
-                thoiGian: serverTimestamp()
-            });
-        }
-
-        let message = `👤 [${acc}]\n`;
-        if (hoaCanThem.length > 0) {
-            message += `✅ Thành công thêm ${hoaCanThem.length} hoa vào "${trangThai}":\n   - ${hoaCanThem.join(', ')}\n\n`;
-        }
-
-        if (hoaBoQua.length > 0) {
-            message += `⚠️ Bỏ qua ${hoaBoQua.length} hoa do đã sở hữu / đã tồn tại:\n   - ${hoaBoQua.join(', ')}`;
-        }
-
-        if (hoaCanThem.length === 0) {
-            message = `⚠️ Tất cả ${hoaBoQua.length} hoa bạn chọn đều ĐÃ SỞ HỮU / ĐÃ TỒN TẠI trong hệ thống cho [${acc}]!`;
-        }
-
-        alert(message);
-        checkboxes.forEach(cb => cb.checked = false);
-
-    } catch (e) {
-        alert("Lỗi khi lưu dữ liệu: " + e.message);
-    }
-}
-
-
-const imageInput = document.getElementById('imageInput');
-const fileUpload = document.getElementById('fileUpload');
-const imagePreview = document.getElementById('imagePreview');
-const previewContainer = document.getElementById('previewContainer');
-
-// Hàm hiển thị xem trước ảnh
-function setPreview(base64Image) {
-  imageInput.value = base64Image; // Lưu chuỗi Base64 vào ô input
-  imagePreview.src = base64Image;
-  previewContainer.style.display = 'block';
-}
-
-// 1. Xử lý khi nhấn Ctrl + V (Paste) vào ô nhập
-imageInput.addEventListener('paste', (e) => {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  for (let item of items) {
-    if (item.type.indexOf('image') !== -1) {
-      const blob = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPreview(event.target.result);
-      };
-      reader.readAsDataURL(blob);
-      e.preventDefault(); // Ngăn hành vi dán mặc định
-      break;
-    }
-  }
-});
-
-// 2. Xử lý khi chọn file từ máy tính / điện thoại
-fileUpload.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target.result);
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-
-
-
-
-
-// Bắt sự kiện khởi tạo
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
-    initMembersFromFirebase(); // 👈 Tải Thành viên từ Firebase
-    initFlowersFromFirebase(); // 👈 Tải Loại Hoa từ Firebase
-
-    document.getElementById('btnAddMember')?.addEventListener('click', handleAddMember);
-    document.getElementById('btnAddFlower')?.addEventListener('click', handleAddFlower);
-
-    document.getElementById('selectColor')?.addEventListener('change', renderFlowers);
-    document.getElementById('inputSearch')?.addEventListener('input', renderFlowers);
-    document.getElementById('btnThuHoach')?.addEventListener('click', () => saveData('Đã thu hoạch'));
-    document.getElementById('btnBoiDuong')?.addEventListener('click', () => saveData('Chờ bồi dưỡng'));
+    initMembersFromFirebase();
+    initFlowersFromFirebase();
 });
