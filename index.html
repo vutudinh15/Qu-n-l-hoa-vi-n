@@ -3,335 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ HOA VIÊN</title>
+    <title>HỘI KIM QUẢ - Hệ thống quản lý hoa viên</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#064e3b">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
-<body class="bg-emerald-950 text-gray-800 font-sans p-2 sm:p-6 min-h-screen relative">
+<body class="bg-emerald-950 min-h-screen text-gray-800 pb-12">
 
-    <!-- ================= HEADER & MENU NAVIGATION ================= -->
-    <div class="max-w-4xl mx-auto bg-emerald-900 text-white p-4 rounded-2xl mb-4 shadow-lg border border-emerald-700">
-        
-        <!-- Dòng trên: Logo tiêu đề bên trái & User Avatar bên phải -->
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-3">
-                <div class="text-3xl">🌸</div>
-                <div>
-                    <h1 class="text-xl font-bold text-yellow-300">HỘI KIM QUẢ</h1>
-                    <p class="text-xs text-emerald-200">Hệ thống tra cứu hoa và quản lý thành viên</p>
-                </div>
-            </div>
-
-            <!-- Avatar User Đăng Nhập (Chỉ hiện khi đã đăng nhập) -->
-            <div id="userHeaderBadge" class="hidden relative">
-                <button onclick="toggleUserMenu()" class="flex items-center gap-2 bg-emerald-800/80 hover:bg-emerald-700 p-1.5 pr-3 rounded-full border border-emerald-600 transition focus:outline-none">
-                    <img id="headerAvatarImg" src="https://ui-avatars.com/api/?name=User&background=facc15&color=000" class="w-9 h-9 rounded-full object-cover border-2 border-yellow-400">
-                    <div class="text-left leading-tight hidden sm:block">
-                        <div id="headerUserName" class="text-sm font-bold text-yellow-300">Tên User</div>
-                        <div id="headerUserRole" class="text-[10px] text-emerald-200 uppercase">Thành viên</div>
-                    </div>
-                </button>
-
-                <!-- Dropdown Menu khi bấm vào Avatar -->
-                <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 text-gray-800 z-50 overflow-hidden">
-                    <button onclick="openChangeAvatarModal()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 flex items-center gap-2">🖼️ Đổi ảnh Avatar</button>
-                    <button onclick="openChangePassModal()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 flex items-center gap-2">🔑 Đổi mật khẩu</button>
-                    <hr class="border-gray-100">
-                    <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-semibold flex items-center gap-2">🚪 Đăng xuất</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Thanh Menu Chuyển Tab -->
-        <div class="flex flex-wrap gap-2 pt-2 border-t border-emerald-800">
-            <button id="tabBtnNhapHoa" onclick="switchTab('nhapHoa')" class="bg-yellow-400 text-gray-900 px-4 py-1.5 rounded-xl text-xs font-bold shadow transition">
-                🌷 Nhập hoa
-            </button>
-            <button id="tabBtnThanhVien" onclick="switchTab('thanhVien')" class="bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">
-                👥 Thành viên & Hoa sở hữu
-            </button>
-        </div>
-    </div>
-
-    <!-- ================= MÀN HÌNH 1: NHẬP HOA ================= -->
-    <div id="viewNhapHoa" class="max-w-4xl mx-auto bg-pink-50/90 rounded-3xl p-4 sm:p-6 shadow-2xl border border-pink-200 space-y-6">
-        
-        <!-- Form Thêm hoa mới -->
-        <div class="bg-white/80 p-4 rounded-2xl border border-pink-200 shadow-sm space-y-3">
-            <h3 class="text-sm font-bold text-emerald-900 mb-1">➕ Thêm hoa mới vào hệ thống</h3>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input type="text" id="newFlowerName" placeholder="Tên hoa mới..." class="p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                
-                <select id="newFlowerColor" class="p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                    <option value="Đỏ">Nền Đỏ</option>
-                    <option value="Cam">Nền Cam</option>
-                    <option value="Tím">Nền Tím</option>
-                    <option value="Xanh dương">Nền Xanh dương</option>
-                    <option value="Xanh lá">Nền Xanh lá</option>
-                </select>
-
-                <button id="btnAddFlower" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow-md">
-                    + Thêm hoa
-                </button>
-            </div>
-
-            <!-- Vùng Upload / Dán / Drag & Drop Ảnh Thông Minh -->
-            <div class="pt-2">
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Hình ảnh hoa:</label>
-                
-                <div id="dropZone" tabindex="0" class="border-2 border-dashed border-pink-300 hover:border-pink-500 bg-pink-50/50 rounded-2xl p-4 text-center cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    
-                    <div id="dropZonePrompt" class="space-y-1">
-                        <p class="text-xs text-gray-600">
-                            Nhấp vào đây rồi nhấn <kbd class="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono font-bold">Ctrl + V</kbd> (Snipping Tool) hoặc <strong class="text-emerald-700">Kéo thả file ảnh</strong>
-                        </p>
-                        <p class="text-[11px] text-gray-400">Hoặc nhập file local: <code class="bg-white px-1 py-0.5 rounded text-[10px]">./image/ten-anh.png</code></p>
-                    </div>
-
-                    <!-- Input Ẩn Lưu Link hoặc mã Base64 -->
-                    <input type="hidden" id="imageInput" name="imageInput">
-
-                    <!-- Nút chọn file từ thiết bị / Điện thoại -->
-                    <div class="mt-2">
-                        <label for="fileUpload" class="inline-block bg-white hover:bg-gray-50 text-emerald-800 text-xs px-3 py-1.5 rounded-xl border border-pink-200 cursor-pointer font-bold shadow-sm transition">
-                            📁 Chọn từ thư viện / máy tính
-                        </label>
-                        <input type="file" id="fileUpload" accept="image/*" class="hidden">
-                    </div>
-
-                    <!-- Khung Xem Trước Ảnh -->
-                    <div id="previewContainer" class="hidden mt-3">
-                        <img id="imagePreview" src="" alt="Preview" class="h-20 mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
-                        <button type="button" onclick="clearImagePreview()" class="mt-1 text-xs text-red-500 hover:underline font-semibold">Xóa ảnh này</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <hr class="border-pink-200">
-
-        <!-- Thanh Bộ Lọc -->
-        <div>
-            <h2 class="text-lg font-bold text-pink-950 mb-3">🌷 Nhập hoa cho ACC / Thành viên</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Chọn Thành viên / ACC</label>
-                    <select id="selectACC" class="w-full p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tìm hoa</label>
-                    <input type="text" id="inputSearch" placeholder="Gõ tên hoa..." class="w-full p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Lọc theo màu nền</label>
-                    <select id="selectColor" class="w-full p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-pink-500 outline-none">
-                        <option value="All">Tất cả phẩm màu</option>
-                        <option value="Đỏ">Hoa nền Đỏ</option>
-                        <option value="Cam">Hoa nền Cam</option>
-                        <option value="Tím">Hoa nền Tím</option>
-                        <option value="Xanh dương">Hoa nền Xanh dương</option>
-                        <option value="Xanh lá">Hoa nền Xanh lá</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Khung danh sách hoa chọn nhập -->
-        <div id="flowerContainer" class="space-y-6"></div>
-
-        <!-- Nút bấm tác vụ -->
-        <div class="pt-4 flex flex-wrap gap-3">
-            <button id="btnThuHoach" class="bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-lg transition">
-                💼 Lưu vào Đã thu hoạch
-            </button>
-            <button id="btnBoiDuong" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-lg transition">
-                🌱 Thêm vào Chờ bồi dưỡng
-            </button>
-        </div>
-    </div>
-
-    <!-- ================= MÀN HÌNH 2: QUẢN LÝ THÀNH VIÊN ================= -->
-    <div id="viewThanhVien" class="max-w-4xl mx-auto bg-pink-50/90 rounded-3xl p-4 sm:p-6 shadow-2xl border border-pink-200 space-y-6 hidden">
-        
-        <!-- Form Thêm thành viên -->
-        <div class="bg-white/80 p-4 rounded-2xl border border-pink-200 shadow-sm">
-            <h3 class="text-sm font-bold text-emerald-900 mb-3">👤 Thêm thành viên / ACC mới</h3>
-            <div class="flex gap-3">
-                <input type="text" id="newMemberName" placeholder="Tên thành viên mới..." class="flex-1 p-2.5 rounded-xl border bg-white text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
-                <button id="btnAddMember" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition">
-                    + Thêm
-                </button>
-            </div>
-        </div>
-
-        <!-- Danh sách quản lý Thành viên -->
-        <div class="bg-white/80 p-4 rounded-2xl border border-pink-200 shadow-sm">
-            <h3 class="text-sm font-bold text-gray-800 mb-2">⚙️ Danh sách quản lý Thành viên / ACC</h3>
-            <div id="memberListManager" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <hr class="border-pink-200">
-
-        <!-- Tra cứu hoa -->
-        <div>
-            <h2 class="text-lg font-bold text-pink-950 mb-3">🔍 Tra cứu hoa theo Thành viên</h2>
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Chọn Thành viên cần xem:</label>
-                <select id="selectMemberToView" onchange="showMemberFlowers(this.value)" class="w-full sm:w-1/2 p-2.5 rounded-xl border bg-white text-sm font-bold text-emerald-900 focus:ring-2 focus:ring-pink-500 outline-none">
-                </select>
-            </div>
-
-            <div id="memberFlowersResult" class="bg-white p-4 rounded-2xl border border-pink-200 min-h-[200px]">
-                <p class="text-sm text-gray-500 italic">Vui lòng chọn thành viên để xem danh sách hoa...</p>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- ================= SYSTEM MODALS / POPUPS ================= -->
-
-    <!-- POPUP 1: ĐĂNG NHẬP / TẠO TÀI KHOẢN -->
-    <div id="authModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border-2 border-emerald-500">
-            
-            <div class="text-center mb-5">
+    <!-- 🔒 MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-emerald-100">
+            <div class="text-center mb-6">
                 <span class="text-4xl">🌸</span>
-                <h2 class="text-xl font-bold text-emerald-900 mt-2">HỘI KIM QUY</h2>
+                <h2 class="text-xl font-bold text-emerald-900 mt-2">HỘI KIM QUẢ</h2>
                 <p class="text-xs text-gray-500">Vui lòng đăng nhập để tiếp tục</p>
             </div>
 
-            <!-- Tab Đăng Nhập / Tạo Tài Khoản -->
-            <div class="flex border-b mb-4 text-sm font-bold">
-                <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2 border-b-2 border-emerald-600 text-emerald-600">Đăng Nhập</button>
-                <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="w-1/2 py-2 border-b-2 border-transparent text-gray-400">Tạo Tài Khoản</button>
+            <!-- Tabs -->
+            <div class="flex border-b mb-6">
+                <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2 font-bold border-b-2 border-emerald-600 text-emerald-600 text-sm">Đăng nhập</button>
+                <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="w-1/2 py-2 font-bold border-b-2 border-transparent text-gray-400 text-sm">Đăng ký</button>
             </div>
 
             <!-- Form Đăng Nhập -->
-            <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();" class="space-y-3">
-                <input id="loginUser" type="text" placeholder="Tên đăng nhập" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" required>
-                <input id="loginPass" type="password" placeholder="Mật khẩu" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" required>
-                <button type="submit" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition shadow-md">Đăng Nhập</button>
-            </form>
-
-            <!-- Form Tạo Tài Khoản (Đã sửa cố định quyền Thành viên) -->
-            <form id="registerForm" onsubmit="event.preventDefault(); handleRegister();" class="space-y-3 hidden">
-                <input id="regName" type="text" placeholder="Họ và tên hiển thị" class="w-full p-2 border rounded-xl text-sm outline-none" required>
-                <input id="regUser" type="text" placeholder="Tên đăng nhập" class="w-full p-2 border rounded-xl text-sm outline-none" required>
-                <input id="regPass" type="password" placeholder="Mật khẩu" class="w-full p-2 border rounded-xl text-sm outline-none" required>
-                <input id="regPassConfirm" type="password" placeholder="Xác nhận mật khẩu" class="w-full p-2 border rounded-xl text-sm outline-none" required>
-                
-                <!-- Hiển thị quyền cố định cho người dùng xem -->
+            <div id="loginForm" class="space-y-4">
                 <div>
-                    <label class="text-[11px] text-gray-500 font-semibold mb-1 block">Cấp quyền tài khoản:</label>
-                    <div class="w-full p-2 border rounded-xl text-sm bg-gray-100 text-gray-700 font-medium border-gray-200">
-                        Thành viên (Chỉ xem, tra cứu)
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tên đăng nhập</label>
+                    <input type="text" id="loginUser" class="w-full px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Nhập username...">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
+                    <input type="password" id="loginPass" class="w-full px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition text-sm">Đăng nhập ngay</button>
+            </div>
+
+            <!-- Form Đăng Ký -->
+            <div id="registerForm" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Họ tên hiển thị</label>
+                    <input type="text" id="regName" class="w-full px-4 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ví dụ: Nguyễn Văn A">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tên đăng nhập</label>
+                    <input type="text" id="regUser" class="w-full px-4 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Chọn username...">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
+                    <input type="password" id="regPass" class="w-full px-4 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Xác nhận mật khẩu</label>
+                    <input type="password" id="regPassConfirm" class="w-full px-4 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="••••••••">
+                </div>
+                <p class="text-[11px] text-amber-600 bg-amber-50 p-2 rounded-lg">ℹ️ Tài khoản đăng ký mới sẽ nhận quyền <b>Thành viên</b>.</p>
+                <button onclick="handleRegister()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition text-sm">Đăng ký tài khoản</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌸 HEADER CHÍNH -->
+    <header class="max-w-6xl mx-auto px-4 pt-6 pb-4">
+        <div class="bg-emerald-900 border border-emerald-800 rounded-3xl p-5 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-2xl shadow-inner">🌸</div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white tracking-wide">HỘI KIM QUẢ</h1>
+                    <p class="text-xs text-emerald-300/80 font-medium">Hệ thống tra cứu hoa và quản lý thành viên</p>
+                </div>
+            </div>
+
+            <!-- Thông tin User & Menu -->
+            <div id="userHeaderBadge" class="hidden flex items-center gap-3 bg-emerald-950/60 px-4 py-2 rounded-2xl border border-emerald-800">
+                <div class="relative cursor-pointer group" onclick="openChangeAvatarModal()" title="Click để đổi ảnh đại diện">
+                    <img id="headerAvatarImg" src="" class="w-10 h-10 rounded-xl object-cover border-2 border-emerald-400 shadow-sm group-hover:opacity-80 transition">
+                    <span class="absolute -bottom-1 -right-1 bg-emerald-600 text-white text-[9px] px-1 rounded-full">📷</span>
+                </div>
+                <div>
+                    <div id="headerUserName" class="text-xs font-bold text-white"></div>
+                    <div id="headerUserRole" class="text-[10px] uppercase tracking-wider text-amber-400 font-extrabold"></div>
+                </div>
+                <div class="relative ml-2">
+                    <button onclick="toggleUserMenu()" class="text-emerald-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-800/60">⚙️ Menu</button>
+                    <div id="userDropdownMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 hidden z-40 text-xs">
+                        <button onclick="openChangeAvatarModal()" class="w-full text-left px-4 py-2 hover:bg-emerald-50 text-gray-700 font-medium">📷 Đổi ảnh đại diện</button>
+                        <button onclick="openChangePassModal()" class="w-full text-left px-4 py-2 hover:bg-emerald-50 text-gray-700 font-medium">🔑 Đổi mật khẩu</button>
+                        <div class="border-t my-1"></div>
+                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 font-bold">🚪 Đăng xuất</button>
                     </div>
-                    <!-- Input ẩn truyền giá trị 'user' về JavaScript -->
-                    <input type="hidden" id="regRole" value="user">
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU ĐIỀU HƯỚNG -->
+        <div id="mainNavTabs" class="flex flex-wrap gap-2 mt-4">
+            <button onclick="switchTab('tab-hoa')" id="btnTabHoa" class="px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm bg-amber-400 text-emerald-950">🌺 1. Quản lý hoa</button>
+            <button onclick="switchTab('tab-danhsachthanhvien')" id="btnTabDanhSachThanhVien" class="px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm bg-emerald-800 text-emerald-200 hover:bg-emerald-700">👥 2. Danh sách thành viên</button>
+            <button onclick="switchTab('tab-sOHu')" id="btnTabSoHuu" class="px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm bg-emerald-800 text-emerald-200 hover:bg-emerald-700">🌷 3. Hoa thành viên sở hữu</button>
+            <button onclick="switchTab('tab-taikhoan')" id="btnTabTaiKhoan" class="px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm bg-emerald-800 text-emerald-200 hover:bg-emerald-700 hidden">🛡️ 4. Quản lý tài khoản (Admin)</button>
+        </div>
+    </header>
+
+    <!-- 📱 NỘI DUNG CHÍNH -->
+    <main class="max-w-6xl mx-auto px-4 space-y-6">
+
+        <!-- ================= PHẦN 1: QUẢN LÝ HOA ================= -->
+        <div id="tab-hoa" class="space-y-6">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100">
+                <h3 class="text-sm font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                    <span class="text-lg">➕</span> Thêm hoa mới vào hệ thống
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="newFlowerName" placeholder="Tên hoa mới..." class="px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <select id="newFlowerColor" class="px-4 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option value="Đỏ">Nền Đỏ </option>
+                        <option value="Cam">Nền Cam </option>
+                        <option value="Tím">Nền Tím </option>
+                        <option value="Xanh dương">Nền Xanh dương</option>
+                        <option value="Xanh lá">Nền Xanh lá cây</option>
+                    </select>
+                    <button onclick="handleAddFlower()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition text-sm">+ Thêm hoa</button>
                 </div>
 
-                <button type="submit" class="w-full bg-yellow-400 text-gray-900 py-2.5 rounded-xl font-bold hover:bg-yellow-300 transition shadow-md">Tạo Tài Khoản</button>
-            </form>
+                <div class="border-2 border-dashed border-emerald-200 rounded-2xl p-4 text-center bg-emerald-50/50">
+                    <p class="text-xs text-gray-600 mb-2">Nhấp vào đây rồi nhấn <kbd class="bg-white px-2 py-0.5 rounded border shadow-2xs font-bold text-emerald-700">Ctrl + V</kbd> (Snipping Tool) hoặc dán link ảnh</p>
+                    <input type="text" id="flowerUrlInput" placeholder="Hoặc dán đường dẫn (URL) ảnh..." class="w-full max-w-md mx-auto px-3 py-1.5 rounded-lg border text-xs mb-2 block outline-none">
+                    <input type="file" id="flowerFileInput" accept="image/*" class="hidden" onchange="previewLocalFlowerImage(this)">
+                    <button onclick="document.getElementById('flowerFileInput').click()" class="bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-800 text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition">📁 Chọn từ thư viện / máy tính</button>
+                    <div class="mt-3 flex justify-center">
+                        <img id="previewFlowerImg" src="https://cdn-icons-png.flaticon.com/512/346/346195.png" class="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-md">
+                    </div>
+                </div>
+            </div>
 
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <h3 class="text-sm font-bold text-emerald-900">📚 Kho tàng các loại hoa mẫu</h3>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="inputSearch" placeholder="🔍 Gõ tên hoa cần tìm..." class="px-4 py-2 rounded-xl border text-xs outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-64">
+                        <select id="selectColor" class="px-4 py-2 rounded-xl border text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="All">Tất cả phẩm màu</option>
+                            <option value="Đỏ">Đỏ </option>
+                            <option value="Cam">Cam </option>
+                            <option value="Tím">Tím </option>
+                            <option value="Xanh dương">Xanh dương</option>
+                            <option value="Xanh lá">Xanh lá cây</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="flowerContainer" class="space-y-4"></div>
+            </div>
         </div>
-    </div>
 
-    <!-- POPUP 2: ĐỔI AVATAR -->
-    <div id="avatarModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-xl">
-            <h3 class="font-bold text-gray-800 mb-3 text-center">🖼️ Đổi Ảnh Đại Diện</h3>
-            
-            <input id="avatarUrlInput" type="text" placeholder="Dán link ảnh (URL)..." class="w-full p-2 border rounded-lg text-sm mb-2 outline-none">
-            
-            <div class="text-center text-xs text-gray-400 my-1">- Hoặc chọn tệp từ máy -</div>
-            <input id="avatarFileInput" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4">
+        <!-- ================= PHẦN 2: DANH SÁCH THÀNH VIÊN ================= -->
+        <div id="tab-danhsachthanhvien" class="space-y-6 hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h3 class="text-sm font-bold text-emerald-900">👥 Danh sách thành viên hội</h3>
+                    <div id="totalMemberBadge" class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs">
+                        📊 Tổng số thành viên: 0
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mb-6">
+                    <input type="text" id="newMemberName" placeholder="Nhập tên thành viên mới..." class="px-4 py-2.5 rounded-xl border text-sm flex-1 outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button onclick="handleAddMember()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition shadow-md">+ Thêm thành viên</button>
+                </div>
 
-            <div class="flex gap-2">
-                <button onclick="saveAvatar()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Lưu thay đổi</button>
-                <button onclick="closeModal('avatarModal')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-xs font-semibold">Hủy</button>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-emerald-50 text-emerald-900 font-bold border-b">
+                            <tr>
+                                <th class="p-3 w-12 text-center">STT</th>
+                                <th class="p-3">Tên thành viên</th>
+                                <th class="p-3">Ngày tham gia</th>
+                                <th class="p-3">Chức vụ</th>
+                                <th class="p-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberTableBodyPublic" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PHẦN 3: HOA THÀNH VIÊN SỞ HỮU ================= -->
+        <div id="tab-sOHu" class="space-y-6 hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100 space-y-4">
+                <h3 class="text-sm font-bold text-emerald-900">🌷 Nhập / Ghi nhận hoa cho Thành viên / ACC</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">1. Chọn Thành viên / ACC</label>
+                        <select id="selectACC" class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-900"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">2. Trạng thái hoa</label>
+                        <select id="selectStatus" class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-900">
+                            <option value="Chờ bồi dưỡng">🌱 Chờ bồi dưỡng</option>
+                            <option value="Đã thu hoạch">💼 Đã thu hoạch</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200 space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-2">
+                        <label class="block text-xs font-bold text-emerald-900">3. Lọc theo màu nền và chọn tên hoa (có thể chọn nhiều loại cùng lúc):</label>
+                        <select id="selectColorFilterAssign" onchange="renderAssignFlowerCheckboxes()" class="px-3 py-1.5 rounded-xl border text-xs outline-none bg-white font-semibold">
+                            <option value="All">Tất cả màu nền</option>
+                            <option value="Đỏ">Nền Đỏ </option>
+                            <option value="Cam">Nền Cam </option>
+                            <option value="Tím">Nền Tím </option>
+                            <option value="Xanh dương">Nền Xanh dương</option>
+                            <option value="Xanh lá">Nền Xanh lá cây</option>
+                        </select>
+                    </div>
+
+                    <div id="assignFlowerCheckboxContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 bg-white rounded-xl border"></div>
+                </div>
+
+                <button onclick="saveSelectedFlowers()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl shadow-md transition text-sm">💾 Lưu danh sách hoa đã chọn cho thành viên</button>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <h3 class="text-sm font-bold text-emerald-900">🔍 Tra cứu hoa sở hữu theo thành viên</h3>
+                    <div class="w-full sm:w-72">
+                        <select id="selectMemberToView" class="w-full px-4 py-2 rounded-xl border text-xs outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-800">
+                            <option value="">-- Chọn thành viên để xem --</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="memberFlowersResult" class="mt-4">
+                    <p class="text-sm text-gray-400 italic">Vui lòng chọn thành viên ở ô trên để xem chi tiết kho hoa...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PHẦN 4: QUẢN LÝ TÀI KHOẢN (CHỈ ADMIN) ================= -->
+        <div id="tab-taikhoan" class="space-y-6 hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100">
+                <h3 class="text-sm font-bold text-emerald-900 mb-4">🛡️ Quản lý tài khoản hệ thống (Chỉ Admin)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-emerald-50 text-emerald-900 font-bold border-b">
+                            <tr>
+                                <th class="p-3">Ảnh đại diện</th>
+                                <th class="p-3">Họ tên</th>
+                                <th class="p-3">Tài khoản & Phân quyền</th>
+                                <th class="p-3 text-right">Thao tác xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountTableBodyAdmin" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODALS -->
+    <div id="avatarModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 class="font-bold text-emerald-900 text-sm mb-3">📷 Cập nhật ảnh đại diện tài khoản</h3>
+            <div class="space-y-3">
+                <input type="text" id="avatarUrlInput" placeholder="Nhập URL ảnh mới..." class="w-full px-3 py-2 rounded-xl border text-xs outline-none">
+                <input type="file" id="avatarFileInput" accept="image/*" class="w-full text-xs text-gray-500">
+                <div class="flex justify-end gap-2 mt-4">
+                    <button onclick="closeModal('avatarModal')" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold">Hủy</button>
+                    <button onclick="saveAvatar()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Lưu ảnh</button>
+                </div>
             </div>
         </div>
     </div>
 
-<!-- Modal Đổi Ảnh Cho Hoa -->
-<div id="changeFlowerImgModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative">
-        <h3 class="text-lg font-bold text-gray-800 mb-1" id="changeFlowerTitle">Đổi ảnh cho hoa</h3>
-        <p class="text-xs text-gray-500 mb-4">Chọn tệp ảnh từ máy tính hoặc nhập URL hình ảnh mới.</p>
+    <div id="changeFlowerImgModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 id="changeFlowerTitle" class="font-bold text-emerald-900 text-sm mb-3">🌸 Đổi ảnh cho hoa</h3>
+            <input type="hidden" id="editingFlowerId">
+            <div class="space-y-3">
+                <input type="text" id="flowerUrlInputModal" placeholder="Nhập URL ảnh mới..." class="w-full px-3 py-2 rounded-xl border text-xs outline-none">
+                <input type="file" id="flowerFileModalInput" accept="image/*" class="w-full text-xs text-gray-500">
+                <div class="flex justify-end gap-2 mt-4">
+                    <button onclick="closeModal('changeFlowerImgModal')" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold">Hủy</button>
+                    <button onclick="saveFlowerImage()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Cập nhật ảnh</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="changePassModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 class="font-bold text-emerald-900 text-sm mb-3">🔑 Đổi mật khẩu tài khoản</h3>
+            <div class="space-y-3">
+                <input type="password" id="oldPassInput" placeholder="Mật khẩu hiện tại..." class="w-full px-3 py-2 rounded-xl border text-xs outline-none">
+                <input type="password" id="newPassInput" placeholder="Mật khẩu mới..." class="w-full px-3 py-2 rounded-xl border text-xs outline-none">
+                <div class="flex justify-end gap-2 mt-4">
+                    <button onclick="closeModal('changePassModal')" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold">Hủy</button>
+                    <button onclick="handleChangePassword()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Xác nhận đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal đổi ảnh đại diện thành viên -->
+<div id="memberAvatarModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-emerald-100 transform transition-all">
+        <h3 id="memberAvatarModalTitle" class="text-base font-bold text-emerald-900 mb-4">🌸 Đổi ảnh đại diện cho thành viên</h3>
         
-        <input type="hidden" id="editingFlowerId">
-
-        <div class="space-y-3">
+        <div class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Tải ảnh từ máy:</label>
-                <input type="file" id="flowerFileInput" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Nhập URL ảnh mới</label>
+                <input type="text" id="memberAvatarUrlInput" placeholder="https://..." class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
 
-            <div class="text-center text-xs font-semibold text-gray-400">- HOẶC -</div>
-
             <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Nhập Link ảnh (URL):</label>
-                <input type="text" id="flowerUrlInput" placeholder="https://..." class="w-full text-xs p-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Hoặc chọn file từ thiết bị</label>
+                <input type="file" id="memberAvatarFileInput" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
             </div>
         </div>
 
-        <div class="flex justify-end gap-2 mt-6">
-            <button onclick="closeModal('changeFlowerImgModal')" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-200">Hủy</button>
-            <button onclick="saveFlowerImage()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700">Lưu thay đổi</button>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeMemberAvatarModal()" class="px-5 py-2.5 rounded-xl border text-sm font-bold text-gray-600 hover:bg-gray-100 transition">Hủy</button>
+            <button onclick="submitMemberAvatarChange()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition">Cập nhật ảnh</button>
         </div>
     </div>
 </div>
 
 
-    
-    <!-- POPUP 3: ĐỔI MẬT KHẨU -->
-    <div id="changePassModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-xl">
-            <h3 class="font-bold text-gray-800 mb-3 text-center">🔑 Đổi Mật Khẩu</h3>
-            <form onsubmit="event.preventDefault(); handleChangePassword();" class="space-y-3">
-                <input id="oldPassInput" type="password" placeholder="Mật khẩu hiện tại" class="w-full p-2 border rounded-lg text-sm outline-none" required>
-                <input id="newPassInput" type="password" placeholder="Mật khẩu mới" class="w-full p-2 border rounded-lg text-sm outline-none" required>
-                <div class="flex gap-2 pt-2">
-                    <button type="submit" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Cập nhật</button>
-                    <button type="button" onclick="closeModal('changePassModal')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-xs font-semibold">Hủy</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- POPUP 4: MODAL CHI TIẾT HOA CỦA THÀNH VIÊN -->
-    <div id="flowerDetailModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
-            <button onclick="closeModal('flowerDetailModal')" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800 text-xl font-bold">&times;</button>
-            
-            <h3 id="modalMemberName" class="text-lg font-bold text-emerald-800 mb-1"></h3>
-            <p class="text-xs text-gray-500 mb-4">Danh sách hoa sở hữu:</p>
-            
-            <div id="modalFlowerList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                <!-- JS render hoa -->
-            </div>
-
-            <div class="mt-5 text-right">
-                <button onclick="closeModal('flowerDetailModal')" class="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-300">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- File JavaScript chính -->
+    <!-- SCRIPT CHÍNH -->
     <script type="module" src="app.js"></script>
-
-    <!-- Hàm hỗ trợ nhanh xóa xem trước ảnh (dành cho HTML) -->
-    <script>
-        function clearImagePreview() {
-            document.getElementById('imageInput').value = '';
-            document.getElementById('imagePreview').src = '';
-            document.getElementById('previewContainer').classList.add('hidden');
-            document.getElementById('dropZonePrompt').classList.remove('hidden');
-            document.getElementById('fileUpload').value = '';
-        }
-    </script>
 </body>
 </html>
